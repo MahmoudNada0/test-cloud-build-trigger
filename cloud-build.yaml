@@ -1,0 +1,12 @@
+timeout: 5400s
+
+steps:
+- name: 'google/cloud-sdk:alpine'
+  args:
+  - 'bash'
+  - '-c'
+  - |
+    echo "Running Cloud Build ..."
+    sleep 60
+    echo "Cloud Build finished successfully."
+
