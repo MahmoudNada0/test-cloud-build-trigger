@@ -1,0 +1,95 @@
+# Copyright 2022 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Execute workflow debian_worker.wf.json to build a new Debian worker.
+# Tested with Debian 10 and Debian 11.
+#
+# To run the Cloud Build workflow, execute the following from the root
+# directory:
+# gcloud builds submit --config=debian_worker_cloudbuild.yaml .
+
+
+##### EDIT COMMENTS ABOVE ...
+
+
+timeout: 4500s
+
+substitutions:
+  _BUILDER_PROJECT: 'mahmoudn-dev'
+  _REPO_OWNER: 'GoogleCloudPlatform'
+  _REPO_NAME: 'osconfig'
+  _GIT_REF: 'a361f8114fbfbaea8b48042a76726162ec8bf2be'
+  _GCS_PATH: 'gs://mahmoudn-image-import-bucket/osconfig-packages-testing'
+  _VERSION: '20231222.01'
+  _DAISY_WORKFLOW: '/workspace/packagebuild/workflows/build_deb10.wf.json'
+  _DAISY_DOCKER_TAG: 'latest'
+  _SBOM_UTIL_GCS_ROOT: 'gs://mahmoudn-image-import-bucket/osconfig-packages-testing'
+
+# ['deb10', 'deb11-arm64', 'el7', 'el8', 'el8-arm64', 'el9', 'el9-arm64', 'goo'],
+
+steps:
+# Build osconfig agent package for deb10.
+- id: 'build-osconfig-agent-package-for-deb10'
+  name: 'gcr.io/compute-image-tools/daisy:${_DAISY_DOCKER_TAG}'
+  args: [
+        '-project=${_BUILDER_PROJECT}',
+        # '-var:git_ref=$COMMIT_SHA',
+        '-var:git_ref=${_GIT_REF}',
+        '-var:repo_owner=${_REPO_OWNER}',
+        '-var:repo_name=${_REPO_NAME}',
+        '-var:version=${_VERSION}',
+        '-var:gcs_path=${_GCS_PATH}',
+        '-var:sbom_util_gcs_root=${_SBOM_UTIL_GCS_ROOT}',
+        '-var:build_dir=',
+        '/workspace/packagebuild/workflows/build_deb10.wf.json'
+        ]
+
+# Build osconfig agent package for deb10.
+- id: 'build-osconfig-agent-package-for-deb11'
+  name: 'gcr.io/compute-image-tools/daisy:${_DAISY_DOCKER_TAG}'
+  args: [
+        '-project=${_BUILDER_PROJECT}',
+        # '-var:git_ref=$COMMIT_SHA',
+        '-var:git_ref=${_GIT_REF}',
+        '-var:repo_owner=${_REPO_OWNER}',
+        '-var:repo_name=${_REPO_NAME}',
+        '-var:version=${_VERSION}',
+        '-var:gcs_path=${_GCS_PATH}',
+        '-var:sbom_util_gcs_root=${_SBOM_UTIL_GCS_ROOT}',
+        '-var:build_dir=',
+        '/workspace/packagebuild/workflows/build_deb11.wf.json'
+        ]
+
+# Push Wrappers to all the Artifact Registry regions
+- id: 'publish-package-into-AR'
+  name: 'google/cloud-sdk:alpine'
+  args:
+  - 'bash'
+  - '-c'
+  - |
+    REGIONS=()
+    readarray -t REGIONS < ./supported-regions
+
+    for _REGION in ${REGIONS[@]}
+      do
+        echo "--> Deploying... osconfig agent package -> $$_REGION in $$_PROJECT project."
+
+        gcloud artifacts apt import gpins-apt-repo --location=$$_REGION --project=${_BUILDER_PROJECT} --gcs-source=gs://mahmoudn-image-import-bucket/osconfig-packages-testing/*
+
+      done
+    echo "----> Deployed osconfig agent package for all regions in $$_PROJECT project"
+
+
+# gcloud builds submit --config=./osconfig-packagebuild-cloudbuild.yaml
+# gcloud container images add-tag gcr.io/$$_PROJECT/$$_TOOL:$_TAG $$_REGION-docker.pkg.dev/$$_PROJECT/wrappers/$$_TOOL:$_TAG -q
