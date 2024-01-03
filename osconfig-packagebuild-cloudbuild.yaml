@@ -85,7 +85,7 @@ steps:
       do
         echo "--> Deploying... osconfig agent package -> $$_REGION in $$_PROJECT project."
 
-        gcloud artifacts apt import gpins-apt-repo --location=$$_REGION --project=${_BUILDER_PROJECT} --gcs-source=gs://mahmoudn-image-import-bucket/osconfig-packages-testing/*
+        gcloud artifacts apt import osconfig-agent-test --location=$$_REGION --project=${_BUILDER_PROJECT} --gcs-source=gs://mahmoudn-image-import-bucket/osconfig-packages-testing/*
 
       done
     echo "----> Deployed osconfig agent package for all regions in $$_PROJECT project"
