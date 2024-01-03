@@ -31,7 +31,7 @@ substitutions:
   _REPO_NAME: 'osconfig'
   _GIT_REF: 'a361f8114fbfbaea8b48042a76726162ec8bf2be'
   _GCS_PATH: 'gs://mahmoudn-image-import-bucket/osconfig-packages-testing'
-  _VERSION: '20231222.01'
+  _VERSION: '20240103.01'
   _DAISY_WORKFLOW: '/workspace/packagebuild/workflows/build_deb10.wf.json'
   _DAISY_DOCKER_TAG: 'latest'
   _SBOM_UTIL_GCS_ROOT: 'gs://mahmoudn-image-import-bucket/osconfig-packages-testing'
